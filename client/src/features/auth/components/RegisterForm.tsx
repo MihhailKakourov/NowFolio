@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
+import { userApi } from '../api/userApi';
 import toast from 'react-hot-toast';
 
 export const RegisterForm = () => {
@@ -25,7 +26,10 @@ export const RegisterForm = () => {
 
             if (error) throw error;
 
-            if (data.user) {
+            if (data.user && data.user.email) {
+                // Сразу синхронизируем пользователя с нашей БД, чтобы можно было заходить по username
+                await userApi.syncUser(data.user.email, formData.username);
+
                 toast.success('Регистрация успешна! Войдите в аккаунт.');
                 navigate('/login');
             }
