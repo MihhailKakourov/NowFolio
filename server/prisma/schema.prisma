@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL") // Используется для работы приложения
-  directUrl = env("DIRECT_URL")   // Используется для миграций
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -15,9 +15,8 @@ model User {
   name      String?
   bio       String?
   avatarUrl String?
-  slug      String   @unique // Уникальная ссылка: nowfolio.com/u/ivan
+  slug      String   @unique
   
-  // Здесь будем хранить токены и данные (YouTube, Instagram)
   socialAccounts Json? 
   
   createdAt DateTime @default(now())
