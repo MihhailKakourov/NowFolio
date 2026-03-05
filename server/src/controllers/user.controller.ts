@@ -45,3 +45,16 @@ export const upgradeToPro = async (request: FastifyRequest<{ Body: { email: stri
         return reply.status(500).send({ error: 'Failed to upgrade to pro' });
     }
 };
+
+export const findEmail = async (request: FastifyRequest<{ Body: { username: string } }>, reply: FastifyReply) => {
+    try {
+        const { username } = request.body;
+        if (!username) return reply.status(400).send({ error: 'Username is required' });
+        const email = await userService.findEmailBySlug(username);
+        if (!email) return reply.status(404).send({ error: 'User not found' });
+        return reply.send({ email });
+    } catch (error) {
+        request.log.error(error);
+        return reply.status(500).send({ error: 'Failed to find email' });
+    }
+};

@@ -24,3 +24,8 @@ export const upgradeToPro = async (email: string) => {
         data: { isPro: true }
     });
 };
+
+export const findEmailBySlug = async (slug: string) => {
+    const user = await prisma.user.findUnique({ where: { slug } });
+    return user?.email || null;
+};

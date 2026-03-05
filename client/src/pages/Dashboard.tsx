@@ -1,9 +1,10 @@
-import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { paymentApi } from '../features/payments/api/paymentApi';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { userApi } from '../features/auth/api/userApi';
+import { supabase } from '../supabase';
 
 interface AuthContextType {
   session: Session;
@@ -12,6 +13,8 @@ interface AuthContextType {
 const Dashboard = () => {
   const { session } = useOutletContext<AuthContextType>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const processedRef = useRef(false);
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
@@ -19,7 +22,12 @@ const Dashboard = () => {
       if (!session?.user?.email) return;
 
       // Если мы вернулись после успешной оплаты Stripe
-      if (searchParams.get('success') === 'true') {
+      if (searchParams.get('success') === 'true' && !processedRef.current) {
+        processedRef.current = true;
+        // Сразу убираем параметр из URL, чтобы не было повторных срабатываний
+        searchParams.delete('success');
+        setSearchParams(searchParams, { replace: true });
+
         const upgradeSuccess = await userApi.upgradeToPro(session.user.email);
         if (upgradeSuccess) {
           toast.success('Оплата прошла успешно! Теперь у вас Pro аккаунт.');
@@ -27,8 +35,6 @@ const Dashboard = () => {
         } else {
           toast.error('Произошла ошибка при обновлении статуса аккаунта. Пожалуйста, обратитесь в поддержку.');
         }
-        searchParams.delete('success');
-        setSearchParams(searchParams, { replace: true });
         return;
       }
 
@@ -56,11 +62,26 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
+
+  const displayName = session.user.user_metadata?.username || session.user.email;
+
   return (
     <div className="p-8 md:p-12 max-w-5xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-4xl font-extrabold tracking-tight text-gruvbox-orangeLight">Привет, {session.user.email}!</h1>
-        <p className="mt-3 text-lg text-gruvbox-fg4">Добро пожаловать в панель управления. Это защищенная страница.</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gruvbox-orangeLight">Привет, {displayName}!</h1>
+          <p className="mt-3 text-lg text-gruvbox-fg4">Добро пожаловать в панель управления. Это защищенная страница.</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="bg-gruvbox-bg2 text-gruvbox-fg4 font-bold py-2 px-6 rounded-lg hover:bg-gruvbox-bg3 transition-colors border border-gruvbox-bg4"
+        >
+          Выйти
+        </button>
       </div>
 
       <div className="mt-8 card p-8 sm:p-10 max-w-sm border-t-4 border-t-gruvbox-blueLight hover:shadow-2xl transition-shadow duration-300">

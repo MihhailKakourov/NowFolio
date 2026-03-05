@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
+import { userApi } from './../api/userApi';
 import toast from 'react-hot-toast';
 
 export const LoginForm = () => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [loginIdentifier, setLoginIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -13,7 +14,20 @@ export const LoginForm = () => {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await authApi.loginWithEmail(email, password);
+        let finalEmail = loginIdentifier;
+
+        // Если нет '@', то предполагаем, что ввели username и пытаемся найти email в базе
+        if (!loginIdentifier.includes('@')) {
+            const resolvedEmail = await userApi.findEmailByUsername(loginIdentifier);
+            if (!resolvedEmail) {
+                toast.error('Пользователь с таким именем не найден');
+                setLoading(false);
+                return;
+            }
+            finalEmail = resolvedEmail;
+        }
+
+        const { error } = await authApi.loginWithEmail(finalEmail, password);
 
         if (error) {
             toast.error('Ошибка входа: ' + error.message);
@@ -31,10 +45,10 @@ export const LoginForm = () => {
         <>
             <form onSubmit={handleEmailLogin} className="space-y-4 mb-8">
                 <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Email или Имя пользователя"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
                     className="input-field"
                     required
                 />

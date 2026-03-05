@@ -26,5 +26,15 @@ export const userApi = {
             console.error('Failed to upgrade to pro', error);
             return false;
         }
+    },
+
+    findEmailByUsername: async (username: string): Promise<string | null> => {
+        try {
+            const response = await axios.post(`${API_URL}/users/find-email`, { username });
+            return response.data.email;
+        } catch (error) {
+            console.error('Failed to find email by username', error);
+            return null;
+        }
     }
 };
