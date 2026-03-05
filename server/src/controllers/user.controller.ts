@@ -10,3 +10,38 @@ export const getUsers = async (request: FastifyRequest, reply: FastifyReply) => 
         return reply.status(500).send({ error: 'Failed to fetch users' });
     }
 };
+
+export const syncUser = async (request: FastifyRequest<{ Body: { email: string, slug?: string } }>, reply: FastifyReply) => {
+    try {
+        const { email, slug } = request.body;
+        if (!email) return reply.status(400).send({ error: 'Email is required' });
+        const user = await userService.syncUser(email, slug);
+        return reply.send(user);
+    } catch (error) {
+        request.log.error(error);
+        return reply.status(500).send({ error: 'Failed to sync user' });
+    }
+};
+
+export const getProStatus = async (request: FastifyRequest<{ Params: { email: string } }>, reply: FastifyReply) => {
+    try {
+        const { email } = request.params;
+        const isPro = await userService.getProStatus(email);
+        return reply.send({ isPro });
+    } catch (error) {
+        request.log.error(error);
+        return reply.status(500).send({ error: 'Failed to get pro status' });
+    }
+};
+
+export const upgradeToPro = async (request: FastifyRequest<{ Body: { email: string } }>, reply: FastifyReply) => {
+    try {
+        const { email } = request.body;
+        if (!email) return reply.status(400).send({ error: 'Email is required' });
+        const user = await userService.upgradeToPro(email);
+        return reply.send({ isPro: user.isPro });
+    } catch (error) {
+        request.log.error(error);
+        return reply.status(500).send({ error: 'Failed to upgrade to pro' });
+    }
+};

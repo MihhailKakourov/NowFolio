@@ -29,13 +29,13 @@ export const LoginForm = () => {
 
     return (
         <>
-            <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+            <form onSubmit={handleEmailLogin} className="space-y-4 mb-8">
                 <input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="input-field"
                     required
                 />
                 <input
@@ -43,27 +43,28 @@ export const LoginForm = () => {
                     placeholder="Пароль"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="input-field"
                     required
                 />
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800"
+                    className="btn-primary mt-6"
                 >
                     {loading ? 'Вход...' : 'Войти'}
                 </button>
             </form>
 
-            <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-gray-300"></div>
-                <span className="flex-shrink mx-4 text-gray-400 text-sm">или</span>
-                <div className="flex-grow border-t border-gray-300"></div>
+            <div className="relative flex py-4 items-center">
+                <div className="flex-grow border-t border-gruvbox-bg3"></div>
+                <span className="flex-shrink mx-4 text-gruvbox-fg4 text-sm font-medium">или</span>
+                <div className="flex-grow border-t border-gruvbox-bg3"></div>
             </div>
 
             <button
                 onClick={handleGoogleLogin}
-                className="w-full mt-4 flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 rounded-md hover:bg-gray-50 transition"
+                type="button"
+                className="w-full mt-2 flex items-center justify-center gap-3 bg-gruvbox-bg2 text-gruvbox-fg0 border border-gruvbox-bg3 py-3 rounded-lg font-medium hover:bg-gruvbox-bg3 transition-all duration-300 transform active:scale-[0.98] shadow-sm"
             >
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5" alt="Google" />
                 <span>Войти через Google</span>

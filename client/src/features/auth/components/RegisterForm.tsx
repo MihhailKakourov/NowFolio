@@ -37,15 +37,15 @@ export const RegisterForm = () => {
     };
 
     return (
-        <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-            <div className="-space-y-px rounded-md shadow-sm">
+        <form className="mt-8 space-y-5" onSubmit={handleRegister}>
+            <div className="space-y-4">
                 <div>
                     <input
                         name="username"
                         type="text"
                         required
-                        className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                        placeholder="Username (Slug)"
+                        className="input-field"
+                        placeholder="Имя пользователя"
                         onChange={handleChange}
                     />
                 </div>
@@ -54,8 +54,8 @@ export const RegisterForm = () => {
                         name="email"
                         type="email"
                         required
-                        className="relative block w-full border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                        placeholder="Email address"
+                        className="input-field"
+                        placeholder="Email адрес"
                         onChange={handleChange}
                     />
                 </div>
@@ -64,8 +64,8 @@ export const RegisterForm = () => {
                         name="password"
                         type="password"
                         required
-                        className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                        placeholder="Password"
+                        className="input-field"
+                        placeholder="Пароль"
                         onChange={handleChange}
                     />
                 </div>
@@ -74,7 +74,7 @@ export const RegisterForm = () => {
             <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex w-full justify-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50"
+                className="btn-primary mt-6"
             >
                 {loading ? 'Создаем аккаунт...' : 'Зарегистрироваться'}
             </button>

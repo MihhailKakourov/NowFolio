@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { userApi } from '../features/auth/api/userApi';
 
 export const ProtectedRoute = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -9,14 +10,29 @@ export const ProtectedRoute = () => {
 
   useEffect(() => {
     // Получаем текущую сессию
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+
+      // Синхронизируем юзера с нашей базой данных
+      if (session?.user?.email) {
+        await userApi.syncUser(
+          session.user.email,
+          session.user.user_metadata?.username
+        );
+      }
+
       setLoading(false);
     });
 
     // Подписываемся на изменения
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session?.user?.email) {
+        await userApi.syncUser(
+          session.user.email,
+          session.user.user_metadata?.username
+        );
+      }
     });
 
     return () => subscription.unsubscribe();
