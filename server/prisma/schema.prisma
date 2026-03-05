@@ -11,13 +11,15 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String
   name      String?
   bio       String?
   avatarUrl String?
   slug      String   @unique
   
   socialAccounts Json? 
+  
+  stripeCustomerID String?
+  isPro			   Boolean @default(false)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
