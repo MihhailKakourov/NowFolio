@@ -12,8 +12,8 @@ export const userApi = {
         try {
             const response = await axios.get(`${API_URL}/users/${email}/pro-status`);
             return response.data.isPro;
-        } catch (error) {
-            console.error('Failed to get pro status', error);
+        } catch (error: any) {
+            console.error('API Error (getProStatus):', error.response?.data || error.message);
             return false;
         }
     },
@@ -22,8 +22,8 @@ export const userApi = {
         try {
             const response = await axios.post(`${API_URL}/users/upgrade-pro`, { email });
             return response.data.isPro;
-        } catch (error) {
-            console.error('Failed to upgrade to pro', error);
+        } catch (error: any) {
+            console.error('API Error (upgradeToPro):', error.message);
             return false;
         }
     },
@@ -32,9 +32,12 @@ export const userApi = {
         try {
             const response = await axios.post(`${API_URL}/users/find-email`, { username });
             return response.data.email;
-        } catch (error) {
-            console.error('Failed to find email by username', error);
-            return null;
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                return null;
+            }
+            console.error('API Error (findEmailByUsername):', error.response?.data || error.message);
+            throw new Error(error.response?.data?.error || 'Ошибка связи с сервером');
         }
     }
 };
