@@ -23,6 +23,7 @@ yarn-error.log*
 
 # Prisma
 /server/prisma/*.db
+/server/prisma/migrations
 
 # Editor directories and files
 .idea
