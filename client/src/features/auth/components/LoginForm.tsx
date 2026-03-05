@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
+import toast from 'react-hot-toast';
 
 export const LoginForm = () => {
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ export const LoginForm = () => {
         const { error } = await authApi.loginWithEmail(email, password);
 
         if (error) {
-            alert('Ошибка входа: ' + error.message);
+            toast.error('Ошибка входа: ' + error.message);
             setLoading(false);
         } else {
             navigate('/');
