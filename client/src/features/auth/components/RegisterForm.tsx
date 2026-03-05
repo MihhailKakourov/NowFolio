@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
+import toast from 'react-hot-toast';
 
 export const RegisterForm = () => {
     const navigate = useNavigate();
@@ -25,11 +26,11 @@ export const RegisterForm = () => {
             if (error) throw error;
 
             if (data.user) {
-                alert('Регистрация успешна! Проверьте почту для подтверждения (если включено) или войдите.');
+                toast.success('Регистрация успешна! Войдите в аккаунт.');
                 navigate('/login');
             }
         } catch (error: any) {
-            alert(error.message || 'Ошибка регистрации');
+            toast.error(error.message || 'Ошибка регистрации');
         } finally {
             setLoading(false);
         }
