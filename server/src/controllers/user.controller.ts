@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import * as userService from '../services/user.service';
 
 export const getUsers = async (request: FastifyRequest, reply: FastifyReply) => {

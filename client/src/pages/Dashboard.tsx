@@ -1,5 +1,5 @@
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
-import { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import { paymentApi } from '../features/payments/api/paymentApi';
 import { useEffect, useState, useRef } from 'react';
 import toast from 'react-hot-toast';

@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as paymentService from '../services/payment.service';
 
 interface PaymentRequestBody {
