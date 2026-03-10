@@ -1,10 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import * as userController from '../controllers/user.controller';
+import { authMiddleware } from '../middleware/auth';
 
 export async function userRoutes(fastify: FastifyInstance) {
-    fastify.get('/users', userController.getUsers);
-    fastify.post('/users/sync', userController.syncUser);
-    fastify.get('/users/:email/pro-status', userController.getProStatus);
-    fastify.post('/users/upgrade-pro', userController.upgradeToPro);
-    fastify.post('/users/find-email', userController.findEmail);
+    // Защищённые маршруты (требуют JWT)
+    fastify.post<{ Body: { email: string; slug?: string } }>('/users/sync', { preHandler: authMiddleware }, userController.syncUser);
+    fastify.get<{ Params: { email: string } }>('/users/:email/pro-status', { preHandler: authMiddleware }, userController.getProStatus);
+
+    // Публичные маршруты (нужны для логина по username)
+    fastify.post<{ Body: { username: string } }>('/users/find-email', userController.findEmail);
 }

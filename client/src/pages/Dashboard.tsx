@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { paymentApi } from '../features/payments/api/paymentApi';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { userApi } from '../features/auth/api/userApi';
 import { supabase } from '../supabase';
@@ -17,34 +17,44 @@ const Dashboard = () => {
   const processedRef = useRef(false);
   const [isPro, setIsPro] = useState(false);
 
+  // Поллинг Pro-статуса с сервера (Stripe webhook обновит его асинхронно)
+  const pollProStatus = useCallback(async (email: string, attempts = 10) => {
+    for (let i = 0; i < attempts; i++) {
+      const status = await userApi.getProStatus(email);
+      if (status) {
+        setIsPro(true);
+        toast.success('Оплата прошла успешно! Теперь у вас Pro аккаунт.');
+        return;
+      }
+      // Ждём 2 секунды между попытками
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    // Если после всех попыток Pro не появился
+    toast('Оплата обрабатывается. Pro статус появится в течение минуты.', { icon: '⏳' });
+  }, []);
+
   useEffect(() => {
     const handleStatus = async () => {
       if (!session?.user?.email) return;
 
-      // Если мы вернулись после успешной оплаты Stripe
+      // Если вернулись после успешной оплаты — поллим статус с сервера
       if (searchParams.get('success') === 'true' && !processedRef.current) {
         processedRef.current = true;
-        // Сразу убираем параметр из URL, чтобы не было повторных срабатываний
         searchParams.delete('success');
         setSearchParams(searchParams, { replace: true });
 
-        const upgradeSuccess = await userApi.upgradeToPro(session.user.email);
-        if (upgradeSuccess) {
-          toast.success('Оплата прошла успешно! Теперь у вас Pro аккаунт.');
-          setIsPro(true);
-        } else {
-          toast.error('Произошла ошибка при обновлении статуса аккаунта. Пожалуйста, обратитесь в поддержку.');
-        }
+        // Запускаем поллинг — webhook мог уже обработать оплату
+        await pollProStatus(session.user.email);
         return;
       }
 
-      // Иначе просто проверяем текущий статус (сохраняется при перезаходе)
+      // Обычная проверка статуса
       const currentProStatus = await userApi.getProStatus(session.user.email);
       setIsPro(currentProStatus);
     };
 
     handleStatus();
-  }, [session, searchParams, setSearchParams]);
+  }, [session, searchParams, setSearchParams, pollProStatus]);
 
   const handleSubscribe = async () => {
     try {

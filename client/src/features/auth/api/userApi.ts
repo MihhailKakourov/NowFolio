@@ -1,29 +1,32 @@
 import axios from 'axios';
+import { supabase } from '../../../supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+/** Получить текущий access token из Supabase сессии */
+const getAuthHeader = async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+        return { Authorization: `Bearer ${session.access_token}` };
+    }
+    return {};
+};
+
 export const userApi = {
     syncUser: async (email: string, slug?: string) => {
-        const response = await axios.post(`${API_URL}/users/sync`, { email, slug });
+        const headers = await getAuthHeader();
+        const response = await axios.post(`${API_URL}/users/sync`, { email, slug }, { headers });
         return response.data;
     },
 
     getProStatus: async (email: string): Promise<boolean> => {
         try {
-            const response = await axios.get(`${API_URL}/users/${email}/pro-status`);
+            const headers = await getAuthHeader();
+            const response = await axios.get(`${API_URL}/users/${email}/pro-status`, { headers });
             return response.data.isPro;
-        } catch (error: any) {
-            console.error('API Error (getProStatus):', error.response?.data || error.message);
-            return false;
-        }
-    },
-
-    upgradeToPro: async (email: string): Promise<boolean> => {
-        try {
-            const response = await axios.post(`${API_URL}/users/upgrade-pro`, { email });
-            return response.data.isPro;
-        } catch (error: any) {
-            console.error('API Error (upgradeToPro):', error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            console.error('API Error (getProStatus):', message);
             return false;
         }
     },
@@ -32,12 +35,13 @@ export const userApi = {
         try {
             const response = await axios.post(`${API_URL}/users/find-email`, { username });
             return response.data.email;
-        } catch (error: any) {
-            if (error.response?.status === 404) {
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
                 return null;
             }
-            console.error('API Error (findEmailByUsername):', error.response?.data || error.message);
-            throw new Error(error.response?.data?.error || 'Ошибка связи с сервером');
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            console.error('API Error (findEmailByUsername):', message);
+            throw new Error('Ошибка связи с сервером');
         }
     }
 };
