@@ -17,6 +17,7 @@
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@prisma/client": "^5.10.0",
+    "@supabase/supabase-js": "^2.99.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",

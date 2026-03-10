@@ -1,15 +1,9 @@
-import Stripe from 'stripe';
+import { stripe } from '../config/stripe';
 import { ENV } from '../config/env';
 
 export const createCheckoutSession = async (email: string, userId: string) => {
-    if (!ENV.STRIPE_SECRET_KEY) {
-        throw new Error('STRIPE_SECRET_KEY is missing in .env');
-    }
-
     // Убираем слэш в конце, если он есть, чтобы избежать двойного слэша //
     const clientUrl = ENV.CLIENT_URL.replace(/\/$/, '');
-
-    const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -27,7 +21,7 @@ export const createCheckoutSession = async (email: string, userId: string) => {
         ],
         mode: 'payment',
         success_url: `${clientUrl}/?success=true`,
-        cancel_url: `${clientUrl}/cancel`,
+        cancel_url: `${clientUrl}/?canceled=true`,
         customer_email: email,
         metadata: {
             userId: userId,
