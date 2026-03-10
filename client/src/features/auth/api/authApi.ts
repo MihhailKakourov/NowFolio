@@ -6,9 +6,10 @@ export const authApi = {
     },
 
     loginWithGoogle: async () => {
+        const redirectUrl = import.meta.env.VITE_CLIENT_URL || window.location.origin;
         return await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: `${window.location.origin}/` },
+            options: { redirectTo: `${redirectUrl}/` },
         });
     },
 
