@@ -33,7 +33,11 @@ export const buildApp = (): FastifyInstance => {
   );
 
   // CORS — только разрешённые домены
-  const allowedOrigins = [ENV.CLIENT_URL, 'http://localhost:5173', 'https://nowfolio-frontend.onrender.com'];
+  const allowedOrigins = [
+    ENV.CLIENT_URL?.replace(/\/$/, ''),
+    'http://localhost:5173',
+    'https://nowfolio-frontend.onrender.com'
+  ];
   fastify.register(cors, {
     origin: (origin, cb) => {
       // Допускаем запросы без origin (например, от Stripe Webhooks или Postman)

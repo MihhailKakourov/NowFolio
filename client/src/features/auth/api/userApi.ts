@@ -13,15 +13,15 @@ const getAuthHeader = async (): Promise<Record<string, string>> => {
 };
 
 export const userApi = {
-    syncUser: async (email: string, slug?: string) => {
-        const headers = await getAuthHeader();
+    syncUser: async (email: string, slug?: string, token?: string) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : await getAuthHeader();
         const response = await axios.post(`${API_URL}/users/sync`, { email, slug }, { headers });
         return response.data;
     },
 
-    getProStatus: async (email: string): Promise<boolean> => {
+    getProStatus: async (email: string, token?: string): Promise<boolean> => {
         try {
-            const headers = await getAuthHeader();
+            const headers = token ? { Authorization: `Bearer ${token}` } : await getAuthHeader();
             const response = await axios.get(`${API_URL}/users/${email}/pro-status`, { headers });
             return response.data.isPro;
         } catch (error: unknown) {

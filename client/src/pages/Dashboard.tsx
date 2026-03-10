@@ -18,9 +18,9 @@ const Dashboard = () => {
   const [isPro, setIsPro] = useState(false);
 
   // Поллинг Pro-статуса с сервера (Stripe webhook обновит его асинхронно)
-  const pollProStatus = useCallback(async (email: string, attempts = 10) => {
+  const pollProStatus = useCallback(async (email: string, token: string, attempts = 10) => {
     for (let i = 0; i < attempts; i++) {
-      const status = await userApi.getProStatus(email);
+      const status = await userApi.getProStatus(email, token);
       if (status) {
         setIsPro(true);
         toast.success('Оплата прошла успешно! Теперь у вас Pro аккаунт.');
@@ -44,12 +44,12 @@ const Dashboard = () => {
         setSearchParams(searchParams, { replace: true });
 
         // Запускаем поллинг — webhook мог уже обработать оплату
-        await pollProStatus(session.user.email);
+        await pollProStatus(session.user.email, session.access_token);
         return;
       }
 
       // Обычная проверка статуса
-      const currentProStatus = await userApi.getProStatus(session.user.email);
+      const currentProStatus = await userApi.getProStatus(session.user.email, session.access_token);
       setIsPro(currentProStatus);
     };
 
