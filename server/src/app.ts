@@ -1,4 +1,5 @@
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
+
 import cors from '@fastify/cors';
 import { paymentRoutes } from './routes/payment.routes';
 import { userRoutes } from './routes/user.routes';

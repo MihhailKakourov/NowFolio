@@ -6,11 +6,8 @@ export const createCheckoutSession = async (email: string, userId: string) => {
         throw new Error('STRIPE_SECRET_KEY is missing in .env');
     }
 
-    // Тестовый режим: имитируем покупку с ценой 0
-    const price = 0;
-    if (price === 0) {
-        return { id: 'test_session', url: `${ENV.CLIENT_URL}/?success=true` };
-    }
+    // Убираем слэш в конце, если он есть, чтобы избежать двойного слэша //
+    const clientUrl = ENV.CLIENT_URL.replace(/\/$/, '');
 
     const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 
@@ -23,14 +20,14 @@ export const createCheckoutSession = async (email: string, userId: string) => {
                     product_data: {
                         name: 'Pro Subscription',
                     },
-                    unit_amount: price > 0 ? price : 2000,
+                    unit_amount: 2000,
                 },
                 quantity: 1,
             },
         ],
         mode: 'payment',
-        success_url: `${ENV.CLIENT_URL}/?success=true`,
-        cancel_url: `${ENV.CLIENT_URL}/cancel`,
+        success_url: `${clientUrl}/?success=true`,
+        cancel_url: `${clientUrl}/cancel`,
         customer_email: email,
         metadata: {
             userId: userId,

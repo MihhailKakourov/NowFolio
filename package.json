@@ -24,9 +24,11 @@
     "update-browserslist-db": "^1.2.3"
   },
   "scripts": {
-	"client": "cd client && npm run dev",
-	"server": "cd server && npm run dev",
-	"dev": "concurrently \"npm run server\" \"npm run client\" --names \"SERVER,CLIENT\" -c \"bgBlue.bold,bgMagenta.bold\""
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\" --names \"SERVER,CLIENT\" -c \"bgBlue.bold,bgMagenta.bold\"",
+    "lint": "concurrently \"cd client && npm run lint\" \"cd server && npm run lint\" --names \"CLIENT,SERVER\" -c \"bgMagenta.bold,bgBlue.bold\"",
+    "lint:fix": "concurrently \"cd client && npm run lint:fix\" \"cd server && npm run lint:fix\" --names \"CLIENT,SERVER\" -c \"bgMagenta.bold,bgBlue.bold\""
   },
   "repository": {
     "type": "git",
