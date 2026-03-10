@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
@@ -8,43 +8,65 @@ export const ProtectedRoute = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const syncInProgress = useRef<string | null>(null);
+
   useEffect(() => {
+    let mounted = true;
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
+
     const initializeSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
         setSession(session);
 
-        if (session?.user?.email) {
-          await userApi.syncUser(
+        if (session?.user?.email && session.access_token && syncInProgress.current !== session.access_token) {
+          syncInProgress.current = session.access_token;
+          userApi.syncUser(
             session.user.email,
-            session.user.user_metadata?.username
-          );
+            session.user.user_metadata?.username,
+            session.access_token
+          ).catch(err => console.error('Background sync failed:', err))
+            .finally(() => { syncInProgress.current = null; });
         }
       } catch (error) {
         console.error('Session initialization error:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(timeout);
+        }
       }
     };
 
     initializeSession();
 
     // Подписываемся на изменения
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       setSession(session);
-      if (session?.user?.email) {
-        try {
-          await userApi.syncUser(
-            session.user.email,
-            session.user.user_metadata?.username
-          );
-        } catch (error) {
-          console.error('Auth state change sync error:', error);
-        }
+
+      // Синхронизируем при логине или обновлении токена
+      if (session?.user?.email && session.access_token && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        if (syncInProgress.current === session.access_token) return;
+        syncInProgress.current = session.access_token;
+
+        userApi.syncUser(
+          session.user.email,
+          session.user.user_metadata?.username,
+          session.access_token
+        ).catch(err => console.error('Auth state change sync error:', err))
+          .finally(() => { syncInProgress.current = null; });
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {
