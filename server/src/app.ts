@@ -1,5 +1,6 @@
-import Fastify, { type FastifyInstance } from 'fastify';
-
+import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
+import path from 'path';
+import fastifyStatic from '@fastify/static';
 import cors from '@fastify/cors';
 import { paymentRoutes } from './routes/payment.routes';
 import { userRoutes } from './routes/user.routes';
@@ -63,6 +64,24 @@ export const buildApp = (): FastifyInstance => {
       uptime: process.uptime(),
       timestamp: new Date()
     };
+  });
+
+  // Раздача статики (Frontend)
+  fastify.register(fastifyStatic, {
+    root: path.join(__dirname, '../../client/dist'),
+    prefix: '/',
+    wildcard: false, // Отключаем wildcard, чтобы API маршруты работали корректно
+  });
+
+  // SPA Fallback: все остальные GET запросы (не API) отдают index.html
+  fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
+    if (request.url.startsWith('/api') ||
+      request.url.startsWith('/users') ||
+      request.url.startsWith('/webhook') ||
+      request.url.startsWith('/create-checkout-session')) {
+      return reply.status(404).send({ error: 'Route not found' });
+    }
+    return reply.sendFile('index.html');
   });
 
   return fastify;

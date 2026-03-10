@@ -9,29 +9,38 @@ export const ProtectedRoute = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Получаем текущую сессию
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
+    const initializeSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
 
-      // Синхронизируем юзера с нашей базой данных
-      if (session?.user?.email) {
-        await userApi.syncUser(
-          session.user.email,
-          session.user.user_metadata?.username
-        );
+        if (session?.user?.email) {
+          await userApi.syncUser(
+            session.user.email,
+            session.user.user_metadata?.username
+          );
+        }
+      } catch (error) {
+        console.error('Session initialization error:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setLoading(false);
-    });
+    initializeSession();
 
     // Подписываемся на изменения
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user?.email) {
-        await userApi.syncUser(
-          session.user.email,
-          session.user.user_metadata?.username
-        );
+        try {
+          await userApi.syncUser(
+            session.user.email,
+            session.user.user_metadata?.username
+          );
+        } catch (error) {
+          console.error('Auth state change sync error:', error);
+        }
       }
     });
 
