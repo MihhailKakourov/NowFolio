@@ -1,9 +1,5 @@
 import { prisma } from '../config/prisma';
 
-export const getAllUsers = async () => {
-    return await prisma.user.findMany();
-};
-
 export const syncUser = async (email: string, slug?: string) => {
     const userSlug = slug || email.split('@')[0] + '-' + Math.floor(Math.random() * 10000);
     return await prisma.user.upsert({
