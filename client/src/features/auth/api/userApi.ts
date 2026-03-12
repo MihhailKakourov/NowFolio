@@ -1,14 +1,15 @@
 import { api } from '../../../services/api';
+import type { User } from '../../../types/user';
 
 export const userApi = {
-    syncUser: async (email: string, slug?: string) => {
+    syncUser: async (email: string, slug?: string): Promise<User> => {
         const response = await api.post('/users/sync', { email, slug });
         return response.data;
     },
 
     getProStatus: async (email: string): Promise<boolean> => {
         try {
-            const response = await api.get(`/users/${email}/pro-status`);
+            const response = await api.get<{ isPro: boolean }>(`/users/${email}/pro-status`);
             return response.data.isPro;
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
