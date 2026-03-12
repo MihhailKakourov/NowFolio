@@ -10,12 +10,17 @@ interface AuthContextType {
   session: Session;
 }
 
+import { useQueryClient } from '@tanstack/react-query';
+
 const Dashboard = () => {
   const { session } = useOutletContext<AuthContextType>();
   const navigate = useNavigate();
-  const { isPro, setIsPro } = useProStatus(session);
+  const queryClient = useQueryClient();
+  const { isPro } = useProStatus(session);
   const { handleSubscribe, isLoading: isPaymentLoading } = useCheckout(session, {
-    onAlreadyPro: () => setIsPro(true),
+    onAlreadyPro: () => {
+      queryClient.invalidateQueries({ queryKey: ['pro-status', session.user.email] });
+    },
   });
 
   const handleLogout = async () => {
