@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { userApi } from '../features/auth/api/userApi';
@@ -17,6 +17,7 @@ const isSessionExpired = (): boolean => {
 export const ProtectedRoute = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const location = useLocation();
 
   const syncInProgress = useRef<string | null>(null);
 
@@ -96,11 +97,17 @@ export const ProtectedRoute = () => {
     return <div className="flex justify-center mt-20">Загрузка...</div>;
   }
 
-  // Если нет сессии — редирект
+  // Если нет сессии — редирект на логин
   if (!session) {
     return <Navigate to="/login" replace />;
   }
 
-  // Передаем сессию в контекст Outlet, чтобы дочерние страницы могли её использовать
+  // Если нет username — редирект на выбор имени (кроме самой страницы /set-username)
+  const hasUsername = !!session.user.user_metadata?.username;
+  if (!hasUsername && location.pathname !== '/set-username') {
+    return <Navigate to="/set-username" replace />;
+  }
+
+  // Передаем сессию в контекст Outlet
   return <Outlet context={{ session }} />;
 };

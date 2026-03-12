@@ -4,7 +4,7 @@ export const syncUser = async (email: string, slug?: string) => {
     const userSlug = slug || email.split('@')[0] + '-' + Math.floor(Math.random() * 10000);
     return await prisma.user.upsert({
         where: { email },
-        update: {},
+        update: slug ? { slug } : {},
         create: { email, slug: userSlug }
     });
 };

@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Register from './pages/Register'
+import SetUsername from './pages/SetUsername'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
         {/* Защищенные маршруты */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/set-username" element={<SetUsername />} />
         </Route>
       </Routes>
     </>
