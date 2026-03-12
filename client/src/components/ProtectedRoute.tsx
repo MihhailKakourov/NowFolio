@@ -71,6 +71,7 @@ export const ProtectedRoute = () => {
       // Сохраняем время логина
       if (event === 'SIGNED_IN') {
         localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
+        toast.success('Вы успешно вошли!');
       }
 
       setSession(session);
