@@ -1,6 +1,7 @@
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import toast from 'react-hot-toast';
 import { useProStatus } from '../features/payments/hooks/useProStatus';
 import { useCheckout } from '../features/payments/hooks/useCheckout';
 import { ProPlanCard } from '../features/payments/components/ProPlanCard';
@@ -19,6 +20,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    toast.success('Вы вышли из аккаунта');
     navigate('/login');
   };
 
