@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { userApi } from '../api/userApi';
 import toast from 'react-hot-toast';
 
 export const RegisterForm = () => {
@@ -22,19 +21,16 @@ export const RegisterForm = () => {
         setLoading(true);
 
         try {
-            const { data, error } = await authApi.register(formData.email, formData.password, formData.username);
+            const { error } = await authApi.register(formData.email, formData.password, formData.username);
 
             if (error) throw error;
 
-            if (data.user && data.user.email) {
-                // Сразу синхронизируем пользователя с нашей БД, чтобы можно было заходить по username
-                await userApi.syncUser(data.user.email, formData.username);
-
-                toast.success('Регистрация успешна! Войдите в аккаунт.');
-                navigate('/login');
-            }
-        } catch (error: any) {
-            toast.error(error.message || 'Ошибка регистрации');
+            // syncUser не нужен здесь — ProtectedRoute сделает sync при первом входе
+            toast.success('Регистрация успешна! Войдите в аккаунт.');
+            navigate('/login');
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Ошибка регистрации';
+            toast.error(message);
         } finally {
             setLoading(false);
         }

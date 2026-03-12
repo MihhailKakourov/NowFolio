@@ -22,12 +22,11 @@ export const ProtectedRoute = () => {
         if (!mounted) return;
         setSession(session);
 
-        if (session?.user?.email && session.access_token && syncInProgress.current !== session.access_token) {
+        if (session?.user?.email && syncInProgress.current !== session.access_token) {
           syncInProgress.current = session.access_token;
           userApi.syncUser(
             session.user.email,
-            session.user.user_metadata?.username,
-            session.access_token
+            session.user.user_metadata?.username
           ).catch(err => console.error('Background sync failed:', err))
             .finally(() => { syncInProgress.current = null; });
         }
@@ -49,14 +48,13 @@ export const ProtectedRoute = () => {
       setSession(session);
 
       // Синхронизируем при логине или обновлении токена
-      if (session?.user?.email && session.access_token && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+      if (session?.user?.email && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
         if (syncInProgress.current === session.access_token) return;
         syncInProgress.current = session.access_token;
 
         userApi.syncUser(
           session.user.email,
-          session.user.user_metadata?.username,
-          session.access_token
+          session.user.user_metadata?.username
         ).catch(err => console.error('Auth state change sync error:', err))
           .finally(() => { syncInProgress.current = null; });
       }

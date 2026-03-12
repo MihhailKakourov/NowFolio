@@ -1,28 +1,14 @@
-import axios from 'axios';
-import { supabase } from '../../../supabase';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-/** Получить текущий access token из Supabase сессии */
-const getAuthHeader = async (): Promise<Record<string, string>> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-        return { Authorization: `Bearer ${session.access_token}` };
-    }
-    return {};
-};
+import { api } from '../../../services/api';
 
 export const userApi = {
-    syncUser: async (email: string, slug?: string, token?: string) => {
-        const headers = token ? { Authorization: `Bearer ${token}` } : await getAuthHeader();
-        const response = await axios.post(`${API_URL}/users/sync`, { email, slug }, { headers });
+    syncUser: async (email: string, slug?: string) => {
+        const response = await api.post('/users/sync', { email, slug });
         return response.data;
     },
 
-    getProStatus: async (email: string, token?: string): Promise<boolean> => {
+    getProStatus: async (email: string): Promise<boolean> => {
         try {
-            const headers = token ? { Authorization: `Bearer ${token}` } : await getAuthHeader();
-            const response = await axios.get(`${API_URL}/users/${email}/pro-status`, { headers });
+            const response = await api.get(`/users/${email}/pro-status`);
             return response.data.isPro;
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
@@ -33,10 +19,15 @@ export const userApi = {
 
     findEmailByUsername: async (username: string): Promise<string | null> => {
         try {
-            const response = await axios.post(`${API_URL}/users/find-email`, { username });
+            const response = await api.post('/users/find-email', { username });
             return response.data.email;
         } catch (error: unknown) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) {
+            if (
+                typeof error === 'object' &&
+                error !== null &&
+                'response' in error &&
+                (error as { response?: { status?: number } }).response?.status === 404
+            ) {
                 return null;
             }
             const message = error instanceof Error ? error.message : 'Unknown error';
