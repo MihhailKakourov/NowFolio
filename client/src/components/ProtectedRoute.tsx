@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { userApi } from '../features/auth/api/userApi';
+import toast from 'react-hot-toast';
 
 const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 часа
 const LOGIN_TIMESTAMP_KEY = 'nowfolio_login_at';
@@ -37,6 +38,7 @@ export const ProtectedRoute = () => {
           localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
           await supabase.auth.signOut();
           setSession(null);
+          toast('Сессия истекла. Войдите снова.', { icon: '🔒' });
           return;
         }
 

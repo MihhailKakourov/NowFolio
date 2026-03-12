@@ -14,31 +14,40 @@ export const LoginForm = () => {
         e.preventDefault();
         setLoading(true);
 
-        let finalEmail = loginIdentifier;
+        try {
+            let finalEmail = loginIdentifier;
 
-        // Если нет '@', то предполагаем, что ввели username и пытаемся найти email в базе
-        if (!loginIdentifier.includes('@')) {
-            const resolvedEmail = await userApi.findEmailByUsername(loginIdentifier);
-            if (!resolvedEmail) {
-                toast.error('Пользователь с таким именем не найден');
-                setLoading(false);
-                return;
+            // Если нет '@', то предполагаем, что ввели username и пытаемся найти email в базе
+            if (!loginIdentifier.includes('@')) {
+                const resolvedEmail = await userApi.findEmailByUsername(loginIdentifier);
+                if (!resolvedEmail) {
+                    toast.error('Пользователь с таким именем не найден');
+                    setLoading(false);
+                    return;
+                }
+                finalEmail = resolvedEmail;
             }
-            finalEmail = resolvedEmail;
-        }
 
-        const { error } = await authApi.loginWithEmail(finalEmail, password);
+            const { error } = await authApi.loginWithEmail(finalEmail, password);
 
-        if (error) {
-            toast.error('Ошибка входа: ' + error.message);
+            if (error) {
+                toast.error('Ошибка входа: ' + error.message);
+            } else {
+                navigate('/');
+            }
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Ошибка связи с сервером';
+            toast.error(message);
+        } finally {
             setLoading(false);
-        } else {
-            navigate('/');
         }
     };
 
     const handleGoogleLogin = async () => {
-        await authApi.loginWithGoogle();
+        const { error } = await authApi.loginWithGoogle();
+        if (error) {
+            toast.error('Ошибка входа через Google: ' + error.message);
+        }
     };
 
     return (
