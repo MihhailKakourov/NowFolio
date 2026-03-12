@@ -22,7 +22,7 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  const displayName = session.user.user_metadata?.username || session.user.email;
+  const displayName = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Пользователь';
   const isButtonDisabled = isPro === null || isPaymentLoading;
 
   return (
