@@ -1,10 +1,9 @@
-import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
-import { paymentApi } from '../features/payments/api/paymentApi';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { userApi } from '../features/auth/api/userApi';
 import { supabase } from '../supabase';
+import { useProStatus } from '../features/payments/hooks/useProStatus';
+import { useCheckout } from '../features/payments/hooks/useCheckout';
+import { ProPlanCard } from '../features/payments/components/ProPlanCard';
 
 interface AuthContextType {
   session: Session;
@@ -12,76 +11,11 @@ interface AuthContextType {
 
 const Dashboard = () => {
   const { session } = useOutletContext<AuthContextType>();
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const processedRef = useRef(false);
-  const [isPro, setIsPro] = useState<boolean | null>(null); // null = загружается
-  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
-
-  // Поллинг Pro-статуса с сервера (Stripe webhook обновит его асинхронно)
-  const pollProStatus = useCallback(async (email: string, token: string, attempts = 10) => {
-    for (let i = 0; i < attempts; i++) {
-      const status = await userApi.getProStatus(email, token);
-      if (status) {
-        setIsPro(true);
-        toast.success('Оплата прошла успешно! Теперь у вас Pro аккаунт.');
-        return;
-      }
-      // Ждём 2 секунды между попытками
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    // Если после всех попыток Pro не появился
-    toast('Оплата обрабатывается. Pro статус появится в течение минуты.', { icon: '⏳' });
-  }, []);
-
-  useEffect(() => {
-    const handleStatus = async () => {
-      if (!session?.user?.email) return;
-
-      // Если вернулись после успешной оплаты — поллим статус с сервера
-      if (searchParams.get('success') === 'true' && !processedRef.current) {
-        processedRef.current = true;
-        searchParams.delete('success');
-        setSearchParams(searchParams, { replace: true });
-
-        // Запускаем поллинг — webhook мог уже обработать оплату
-        await pollProStatus(session.user.email, session.access_token);
-        return;
-      }
-
-      // Обычная проверка статуса
-      const currentProStatus = await userApi.getProStatus(session.user.email, session.access_token);
-      setIsPro(currentProStatus);
-    };
-
-    handleStatus();
-  }, [session, searchParams, setSearchParams, pollProStatus]);
-
-  const handleSubscribe = async () => {
-    if (isPaymentLoading) return;
-    setIsPaymentLoading(true);
-    try {
-      const response = await paymentApi.createCheckoutSession(
-        session.user.email || '',
-        session.user.id
-      );
-
-      if (response.url) {
-        window.location.href = response.url;
-      }
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { status?: number } };
-      if (axiosError.response?.status === 409) {
-        setIsPro(true);
-        toast.success('У вас уже есть Pro подписка!');
-      } else {
-        console.error('Payment error:', error);
-        toast.error('Не удалось создать платеж');
-      }
-    } finally {
-      setIsPaymentLoading(false);
-    }
-  };
+  const { isPro, setIsPro } = useProStatus(session);
+  const { handleSubscribe, isLoading: isPaymentLoading } = useCheckout(session, {
+    onAlreadyPro: () => setIsPro(true),
+  });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -89,8 +23,6 @@ const Dashboard = () => {
   };
 
   const displayName = session.user.user_metadata?.username || session.user.email;
-
-  // Кнопка недоступна пока загружается статус
   const isButtonDisabled = isPro === null || isPaymentLoading;
 
   return (
@@ -98,7 +30,7 @@ const Dashboard = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-gruvbox-orangeLight">Привет, {displayName}!</h1>
-          <p className="mt-3 text-lg text-gruvbox-fg4">Добро пожаловать в панель управления. Это защищенная страница.</p>
+          <p className="mt-3 text-lg text-gruvbox-fg4">Добро пожаловать в панель управления.</p>
         </div>
         <button
           onClick={handleLogout}
@@ -108,34 +40,12 @@ const Dashboard = () => {
         </button>
       </div>
 
-      <div className="mt-8 card p-8 sm:p-10 max-w-sm border-t-4 border-t-gruvbox-blueLight hover:shadow-2xl transition-shadow duration-300">
-        <h2 className="text-2xl font-bold text-gruvbox-blueLight mb-2">Pro Plan</h2>
-        <p className="text-gruvbox-fg4 mb-6 leading-relaxed">Получите неограниченный доступ ко всем функциям и премиум поддержке навсегда.</p>
-
-        <p className="text-5xl font-extrabold text-gruvbox-fg0">$0 <span className="text-lg font-medium text-gruvbox-fg4">/ навсегда</span></p>
-
-        {isPro ? (
-          <button
-            disabled
-            className="mt-8 w-full bg-gruvbox-bg3 text-gruvbox-fg4 font-bold py-3 rounded-lg cursor-not-allowed border border-gruvbox-bg4 shadow-inner"
-          >
-            ✓ Активно
-          </button>
-        ) : (
-          <button
-            onClick={handleSubscribe}
-            disabled={isButtonDisabled}
-            className={`btn-primary mt-8 flex items-center justify-center gap-2 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isPro === null ? 'Загрузка...' : isPaymentLoading ? 'Переход к оплате...' : 'Купить Pro'}
-            {!isButtonDisabled && (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            )}
-          </button>
-        )}
-      </div>
+      <ProPlanCard
+        isPro={isPro}
+        isButtonDisabled={isButtonDisabled}
+        isPaymentLoading={isPaymentLoading}
+        onSubscribe={handleSubscribe}
+      />
     </div>
   );
 };
