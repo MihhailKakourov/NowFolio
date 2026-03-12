@@ -15,7 +15,8 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const processedRef = useRef(false);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState<boolean | null>(null); // null = загружается
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   // Поллинг Pro-статуса с сервера (Stripe webhook обновит его асинхронно)
   const pollProStatus = useCallback(async (email: string, token: string, attempts = 10) => {
@@ -57,6 +58,8 @@ const Dashboard = () => {
   }, [session, searchParams, setSearchParams, pollProStatus]);
 
   const handleSubscribe = async () => {
+    if (isPaymentLoading) return;
+    setIsPaymentLoading(true);
     try {
       const response = await paymentApi.createCheckoutSession(
         session.user.email || '',
@@ -66,9 +69,17 @@ const Dashboard = () => {
       if (response.url) {
         window.location.href = response.url;
       }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Не удалось создать платеж');
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        setIsPro(true);
+        toast.success('У вас уже есть Pro подписка!');
+      } else {
+        console.error('Payment error:', error);
+        toast.error('Не удалось создать платеж');
+      }
+    } finally {
+      setIsPaymentLoading(false);
     }
   };
 
@@ -78,6 +89,9 @@ const Dashboard = () => {
   };
 
   const displayName = session.user.user_metadata?.username || session.user.email;
+
+  // Кнопка недоступна пока загружается статус
+  const isButtonDisabled = isPro === null || isPaymentLoading;
 
   return (
     <div className="p-8 md:p-12 max-w-5xl mx-auto space-y-8">
@@ -110,12 +124,15 @@ const Dashboard = () => {
         ) : (
           <button
             onClick={handleSubscribe}
-            className="btn-primary mt-8 flex items-center justify-center gap-2"
+            disabled={isButtonDisabled}
+            className={`btn-primary mt-8 flex items-center justify-center gap-2 ${isButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Купить Pro
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            {isPro === null ? 'Загрузка...' : isPaymentLoading ? 'Переход к оплате...' : 'Купить Pro'}
+            {!isButtonDisabled && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            )}
           </button>
         )}
       </div>

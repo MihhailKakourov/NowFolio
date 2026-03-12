@@ -1,5 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as paymentService from '../services/payment.service';
+import * as userService from '../services/user.service';
 
 interface PaymentRequestBody {
     email: string;
@@ -17,6 +18,12 @@ export const createCheckoutSession = async (
     }
 
     try {
+        // Проверяем, не является ли пользователь уже Pro (защита от race condition)
+        const alreadyPro = await userService.getProStatus(email);
+        if (alreadyPro) {
+            return reply.status(409).send({ error: 'User already has Pro subscription' });
+        }
+
         const sessionData = await paymentService.createCheckoutSession(email, userId);
         return reply.send(sessionData);
     } catch (error) {
